@@ -48,8 +48,9 @@
                 });
                 const temperatures = reversedData.map(item => item.temperature);
                 const humidities = reversedData.map(item => item.humidity);
+                const airQualities = reversedData.map(item => item.airquality);
 
-                drawChart(labels, temperatures, humidities);
+               drawChart(labels, temperatures, humidities, airqualities);
 
             } catch (error) {
                 console.error("Error connecting to AWS:", error);
@@ -57,7 +58,7 @@
             }
         }
 
-        function drawChart(labels, temp, hum) {
+        function drawChart(labels, temperatures, humidities, airqualities) {
             const ctx = document.getElementById('weatherChart').getContext('2d');
             
             // Destroy the old chart before drawing a new one so they don't overlap
@@ -85,7 +86,13 @@
                             backgroundColor: 'rgba(54, 162, 235, 0.2)',
                             yAxisID: 'y1',
                             tension: 0.3
-                        }
+                        },
+                        {
+                            label: 'Air Quality',
+                            data: airQualities,
+                            borderColor: 'rgb(153, 102, 255)',
+                            tension: 0.1
+                         }
                     ]
                 },
                 options: {
