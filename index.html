@@ -50,7 +50,7 @@
                 const humidities = reversedData.map(item => item.humidity);
                 const airQualities = reversedData.map(item => item.airquality);
 
-               drawChart(labels, temperatures, humidities, airqualities);
+               drawChart(labels, temperatures, humidities, airQualities);
 
             } catch (error) {
                 console.error("Error connecting to AWS:", error);
