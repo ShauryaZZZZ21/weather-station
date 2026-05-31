@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32 Live Weather Station</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+        .chart-container { width: 85%; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        #statusText { color: #555; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h1>Live Weather Data 🌤️</h1>
+    <p id="statusText">Connecting to AWS...</p>
+    
+    <div class="chart-container">
+        <canvas id="weatherChart"></canvas>
+    </div>
+
+    <script>
+        // YOUR API URL
+        const apiUrl = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather';
+        let weatherChart;
+
+        async function fetchWeatherData() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // If the array is empty [], tell the user we are waiting for hardware
+                if (data.length === 0) {
+                    document.getElementById('statusText').innerText = "Cloud connected securely! Waiting for ESP32 hardware to send data...";
+                    return; 
+                }
+
+                document.getElementById('statusText').innerText = "Live data streaming successfully!";
+
+                // AWS gives us newest data first, but graphs usually read left-to-right (oldest to newest)
+                const reversedData = data.reverse();
+
+                // Extract data for our axes
+                const labels = reversedData.map(item => {
+                    // Converts the timestamp string from the ESP32 into a readable clock time
+                    let date = new Date(item.timestamp * 1000); 
+                    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                });
+                const temperatures = reversedData.map(item => item.temperature);
+                const humidities = reversedData.map(item => item.humidity);
+
+                drawChart(labels, temperatures, humidities);
+
+            } catch (error) {
+                console.error("Error connecting to AWS:", error);
+                document.getElementById('statusText').innerText = "Error connecting to cloud gateway.";
+            }
+        }
+
+        function drawChart(labels, temp, hum) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            
+            // Destroy the old chart before drawing a new one so they don't overlap
+            if (weatherChart) {
+                weatherChart.destroy();
+            }
+
+            weatherChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temperature (°C)',
+                            data: temp,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            yAxisID: 'y',
+                            tension: 0.3 // Adds a slight curve to the line
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: hum,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            yAxisID: 'y1',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Temperature (°C)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Humidity (%)' },
+                            grid: { drawOnChartArea: false } // Keeps the background grid clean
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetch data immediately, then automatically refresh the graph every 10 seconds!
+        fetchWeatherData();
+        setInterval(fetchWeatherData, 10000);
+    </script>
+
+</body>
+</html>
