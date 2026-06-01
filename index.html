@@ -33,9 +33,16 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.5); transition: background 2s ease;
             animation: fadeDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        
+        /* The Live Canvas Engine */
+        #skyCanvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
+        }
+
         .sky-banner::after {
             content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(5,5,5,0.8), transparent);
+            background: linear-gradient(to top, rgba(5,5,5,0.8), transparent); z-index: 1;
         }
         .sky-banner-content { position: relative; z-index: 2; }
         .sky-banner h1 { font-size: 3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
@@ -58,7 +65,6 @@
             animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        /* Staggered Animations */
         .bento-card:nth-child(1) { animation-delay: 0.1s; }
         .bento-card:nth-child(2) { animation-delay: 0.2s; }
         .bento-card:nth-child(3) { animation-delay: 0.3s; }
@@ -79,7 +85,6 @@
         .c-temp { color: #ff6b6b; } .c-hum { color: #4facfe; } .c-pres { color: #00f2fe; }
         .c-aq { color: #a18cd1; } .c-feel { color: #ff9a9e; } .c-rain { color: #43e97b; }
 
-        /* Keyframes */
         @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
@@ -89,6 +94,7 @@
 
     <div class="container">
         <div class="sky-banner" id="skyBanner">
+            <canvas id="skyCanvas"></canvas>
             <div class="sky-banner-content">
                 <h1 id="timeGreeting">Atmosphere OS</h1>
                 <p><span class="ping"></span> Live AWS Telemetry Stream</p>
@@ -131,6 +137,86 @@
     <script>
         const apiEndpoint = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather';
 
+        // --- 1. LIVE SKY CANVAS ENGINE ---
+        function initSkyEngine() {
+            const canvas = document.getElementById('skyCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Match canvas to banner size
+            let width = canvas.width = canvas.offsetWidth;
+            let height = canvas.height = canvas.offsetHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = canvas.offsetWidth;
+                height = canvas.height = canvas.offsetHeight;
+            });
+
+            // Pre-generate stars for night
+            const stars = Array.from({length: 120}, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 1.5,
+                alpha: Math.random(),
+                speed: (Math.random() * 0.02) + 0.005
+            }));
+
+            // Pre-generate clouds for day
+            const clouds = Array.from({length: 4}, () => ({
+                x: Math.random() * width,
+                y: (Math.random() * height * 0.4) + 10,
+                speed: (Math.random() * 0.3) + 0.1,
+                size: (Math.random() * 20) + 15
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+                const hour = new Date().getHours();
+
+                if (hour < 5 || hour >= 20) {
+                    // NIGHT TIME: Twinkling Stars & Moon
+                    stars.forEach(s => {
+                        ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+                        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+                        s.alpha += s.speed;
+                        if(s.alpha >= 1 || s.alpha <= 0) s.speed *= -1; // Twinkle effect
+                    });
+                    
+                    // Moon
+                    ctx.fillStyle = 'rgba(255, 255, 240, 0.9)';
+                    ctx.shadowBlur = 30; ctx.shadowColor = 'rgba(255, 255, 240, 0.4)';
+                    ctx.beginPath(); ctx.arc(width * 0.85, height * 0.4, 25, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                } else if (hour >= 8 && hour < 17) {
+                    // DAY TIME: Bright Sun & Drifting Clouds
+                    ctx.fillStyle = 'rgba(255, 225, 120, 1)';
+                    ctx.shadowBlur = 50; ctx.shadowColor = 'rgba(255, 200, 50, 0.6)';
+                    ctx.beginPath(); ctx.arc(width * 0.8, height * 0.3, 40, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                    clouds.forEach(c => {
+                        ctx.beginPath(); 
+                        ctx.arc(c.x, c.y, c.size, 0, Math.PI*2);
+                        ctx.arc(c.x + c.size*1.2, c.y - c.size*0.3, c.size*1.2, 0, Math.PI*2);
+                        ctx.arc(c.x + c.size*2.2, c.y, c.size*0.9, 0, Math.PI*2);
+                        ctx.fill();
+                        c.x += c.speed;
+                        if(c.x > width + 50) c.x = -100; // Reset cloud to left side
+                    });
+                } else {
+                    // DAWN / DUSK: Horizon Sun
+                    ctx.fillStyle = 'rgba(255, 120, 50, 0.9)';
+                    ctx.shadowBlur = 60; ctx.shadowColor = 'rgba(255, 80, 0, 0.5)';
+                    ctx.beginPath(); ctx.arc(width * 0.5, height * 0.8, 45, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // --- 2. AWS DATA PIPELINE ---
         let currentValues = { temp: 0, hum: 0, pres: 0, aq: 0, feel: 0, rain: 0 };
 
         function animateValue(id, key, endValue, isFloat = false) {
@@ -144,17 +230,13 @@
             function update(currentTime) {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                
                 const easeOut = 1 - Math.pow(1 - progress, 3);
                 const current = startValue + (endValue - startValue) * easeOut;
 
                 obj.innerText = isFloat ? current.toFixed(1) : Math.round(current);
 
-                if (progress < 1) {
-                    requestAnimationFrame(update);
-                } else {
-                    currentValues[key] = endValue; 
-                }
+                if (progress < 1) { requestAnimationFrame(update); } 
+                else { currentValues[key] = endValue; }
             }
             requestAnimationFrame(update);
         }
@@ -172,15 +254,12 @@
 
         function calculateDerivedMetrics(temp, hum, pres) {
             const feelsLike = temp + 0.33 * (hum / 100 * 6.105 * Math.exp(17.27 * temp / (237.7 + temp))) - 4.00;
-
             let rainChance = 0;
             if (pres > 0) { 
-                // Adjusted baseline for ~900m elevation (Normal pressure is ~914 hPa)
                 const pressureFactor = Math.max(0, (914 - pres) * 3.5); 
                 const humidityFactor = hum > 60 ? (hum - 60) * 1.5 : 0; 
                 rainChance = Math.min(100, pressureFactor + humidityFactor); 
             }
-
             return { feelsLike: feelsLike, rainChance: rainChance };
         }
 
@@ -190,12 +269,7 @@
                 if (!response.ok) throw new Error("Gateway Offline");
                 
                 const data = await response.json();
-                
-                // BULLETPROOF SORT: Mathematically find the object with the highest timestamp
-                const latest = data.reduce((prev, current) => {
-                    return (prev.timestamp > current.timestamp) ? prev : current;
-                });
-
+                const latest = data.reduce((prev, current) => (prev.timestamp > current.timestamp) ? prev : current);
                 const derived = calculateDerivedMetrics(latest.temperature, latest.humidity, latest.pressure);
 
                 animateValue('val-temp', 'temp', latest.temperature, true);
@@ -212,6 +286,8 @@
             }
         }
 
+        // --- 3. BOOT SEQUENCE ---
+        initSkyEngine();
         updateSkyTheme();
         fetchWeatherData();
         setInterval(fetchWeatherData, 10000); 
