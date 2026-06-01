@@ -8,45 +8,67 @@
     
     <style>
         :root {
-            --bg-color: #050505;
-            --card-bg: rgba(20, 20, 25, 0.6);
-            --card-border: rgba(255, 255, 255, 0.05);
+            --card-bg: rgba(10, 12, 18, 0.65); /* Dark frosted glass */
+            --card-border: rgba(255, 255, 255, 0.1);
             --text-primary: #ffffff;
-            --text-secondary: #8892b0;
-            --accent: #00f2fe;
+            --text-secondary: #94a3b8;
             
-            /* Dynamic Sky Gradients */
-            --sky-dawn: linear-gradient(135deg, #f39c12, #d35400, #2c3e50);
-            --sky-day: linear-gradient(135deg, #1cc4f2, #0072ff);
-            --sky-dusk: linear-gradient(135deg, #2c3e50, #fd746c);
-            --sky-night: linear-gradient(135deg, #090a0f, #10121a, #1a1c23);
+            /* Full-Screen Dynamic Sky Gradients */
+            --sky-dawn: linear-gradient(135deg, #1a1a2e, #ff7e5f, #feb47b);
+            --sky-day: linear-gradient(135deg, #2980b9, #6dd5fa, #ffffff);
+            --sky-dusk: linear-gradient(135deg, #0f2027, #203a43, #ff4e50);
+            --sky-night: linear-gradient(135deg, #050505, #0a0a12, #11111a);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-primary); min-height: 100vh; padding: 2rem; display: flex; justify-content: center; align-items: center; }
+        
+        /* The body acts as the base gradient */
+        body { 
+            color: var(--text-primary); 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            transition: background 2s ease-in-out;
+            background: var(--sky-night); /* Fallback */
+        }
 
-        .container { width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 2rem; }
+        /* Full Screen Live Canvas Engine */
+        #skyCanvas {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh;
+            z-index: 0; 
+            pointer-events: none;
+        }
 
-        /* Dynamic Sky Banner */
+        /* Container that floats above the canvas */
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%; 
+            max-width: 1000px; 
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            display: flex; 
+            flex-direction: column; 
+            gap: 2rem;
+        }
+
+        /* Updated Banner: Now a glass card */
         .sky-banner {
-            border-radius: 24px; padding: 3rem; position: relative; overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5); transition: background 2s ease;
+            background: var(--card-bg);
+            backdrop-filter: blur(24px); 
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px; 
+            padding: 3rem; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             animation: fadeDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        /* The Live Canvas Engine */
-        #skyCanvas {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; pointer-events: none;
-        }
-
-        .sky-banner::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(5,5,5,0.8), transparent); z-index: 1;
-        }
-        .sky-banner-content { position: relative; z-index: 2; }
-        .sky-banner h1 { font-size: 3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
-        .sky-banner p { color: #a1a1aa; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .sky-banner h1 { font-size: 3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .sky-banner p { color: #cbd5e1; font-weight: 600; display: flex; align-items: center; gap: 8px; }
         
         /* Live Ping Dot */
         .ping { width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
@@ -57,14 +79,19 @@
         }
 
         .bento-card {
-            background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--card-border); border-radius: 24px; padding: 2rem;
+            background: var(--card-bg); 
+            backdrop-filter: blur(24px); 
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border); 
+            border-radius: 24px; 
+            padding: 2rem;
             display: flex; flex-direction: column; justify-content: space-between;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             opacity: 0; transform: translateY(30px);
             animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
+        /* Staggered Animations */
         .bento-card:nth-child(1) { animation-delay: 0.1s; }
         .bento-card:nth-child(2) { animation-delay: 0.2s; }
         .bento-card:nth-child(3) { animation-delay: 0.3s; }
@@ -72,13 +99,13 @@
         .bento-card:nth-child(5) { animation-delay: 0.5s; }
         .bento-card:nth-child(6) { animation-delay: 0.6s; }
 
-        .bento-card:hover { transform: translateY(-8px) scale(1.02); background: rgba(30, 30, 38, 0.8); border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .bento-card:hover { transform: translateY(-8px) scale(1.02); background: rgba(15, 18, 25, 0.85); border-color: rgba(255, 255, 255, 0.25); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
 
         .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .metric-title { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; }
         
         .metric-data { display: flex; align-items: baseline; gap: 0.5rem; }
-        .metric-value { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }
+        .metric-value { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 15px rgba(0,0,0,0.4); }
         .metric-unit { font-size: 1.2rem; font-weight: 600; color: var(--text-secondary); }
 
         /* Specific Colors */
@@ -92,13 +119,12 @@
 </head>
 <body>
 
-    <div class="container">
+    <canvas id="skyCanvas"></canvas>
+
+    <div class="content-wrapper">
         <div class="sky-banner" id="skyBanner">
-            <canvas id="skyCanvas"></canvas>
-            <div class="sky-banner-content">
-                <h1 id="timeGreeting">Atmosphere OS</h1>
-                <p><span class="ping"></span> Live AWS Telemetry Stream</p>
-            </div>
+            <h1 id="timeGreeting">Atmosphere OS</h1>
+            <p><span class="ping"></span> Live AWS Telemetry Stream</p>
         </div>
 
         <div class="bento-grid">
@@ -137,35 +163,30 @@
     <script>
         const apiEndpoint = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather';
 
-        // --- 1. LIVE SKY CANVAS ENGINE ---
+        // --- 1. FULL-SCREEN LIVE CANVAS ENGINE ---
         function initSkyEngine() {
             const canvas = document.getElementById('skyCanvas');
             const ctx = canvas.getContext('2d');
             
-            // Match canvas to banner size
-            let width = canvas.width = canvas.offsetWidth;
-            let height = canvas.height = canvas.offsetHeight;
+            // Lock canvas to full viewport size
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
 
             window.addEventListener('resize', () => {
-                width = canvas.width = canvas.offsetWidth;
-                height = canvas.height = canvas.offsetHeight;
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
             });
 
-            // Pre-generate stars for night
-            const stars = Array.from({length: 120}, () => ({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                r: Math.random() * 1.5,
-                alpha: Math.random(),
+            // Physics arrays
+            const stars = Array.from({length: 200}, () => ({
+                x: Math.random() * width, y: Math.random() * height,
+                r: Math.random() * 1.5, alpha: Math.random(),
                 speed: (Math.random() * 0.02) + 0.005
             }));
 
-            // Pre-generate clouds for day
-            const clouds = Array.from({length: 4}, () => ({
-                x: Math.random() * width,
-                y: (Math.random() * height * 0.4) + 10,
-                speed: (Math.random() * 0.3) + 0.1,
-                size: (Math.random() * 20) + 15
+            const clouds = Array.from({length: 6}, () => ({
+                x: Math.random() * width, y: (Math.random() * height * 0.4),
+                speed: (Math.random() * 0.4) + 0.1, size: (Math.random() * 30) + 20
             }));
 
             function draw() {
@@ -178,23 +199,22 @@
                         ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
                         ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
                         s.alpha += s.speed;
-                        if(s.alpha >= 1 || s.alpha <= 0) s.speed *= -1; // Twinkle effect
+                        if(s.alpha >= 1 || s.alpha <= 0) s.speed *= -1; 
                     });
                     
-                    // Moon
                     ctx.fillStyle = 'rgba(255, 255, 240, 0.9)';
-                    ctx.shadowBlur = 30; ctx.shadowColor = 'rgba(255, 255, 240, 0.4)';
-                    ctx.beginPath(); ctx.arc(width * 0.85, height * 0.4, 25, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 40; ctx.shadowColor = 'rgba(255, 255, 240, 0.3)';
+                    ctx.beginPath(); ctx.arc(width * 0.8, height * 0.2, 40, 0, Math.PI*2); ctx.fill();
                     ctx.shadowBlur = 0;
 
                 } else if (hour >= 8 && hour < 17) {
                     // DAY TIME: Bright Sun & Drifting Clouds
                     ctx.fillStyle = 'rgba(255, 225, 120, 1)';
-                    ctx.shadowBlur = 50; ctx.shadowColor = 'rgba(255, 200, 50, 0.6)';
-                    ctx.beginPath(); ctx.arc(width * 0.8, height * 0.3, 40, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 80; ctx.shadowColor = 'rgba(255, 200, 50, 0.5)';
+                    ctx.beginPath(); ctx.arc(width * 0.8, height * 0.2, 60, 0, Math.PI*2); ctx.fill();
                     ctx.shadowBlur = 0;
 
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
                     clouds.forEach(c => {
                         ctx.beginPath(); 
                         ctx.arc(c.x, c.y, c.size, 0, Math.PI*2);
@@ -202,13 +222,14 @@
                         ctx.arc(c.x + c.size*2.2, c.y, c.size*0.9, 0, Math.PI*2);
                         ctx.fill();
                         c.x += c.speed;
-                        if(c.x > width + 50) c.x = -100; // Reset cloud to left side
+                        if(c.x > width + 100) c.x = -150; 
                     });
                 } else {
                     // DAWN / DUSK: Horizon Sun
-                    ctx.fillStyle = 'rgba(255, 120, 50, 0.9)';
-                    ctx.shadowBlur = 60; ctx.shadowColor = 'rgba(255, 80, 0, 0.5)';
-                    ctx.beginPath(); ctx.arc(width * 0.5, height * 0.8, 45, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = 'rgba(255, 100, 40, 0.95)';
+                    ctx.shadowBlur = 100; ctx.shadowColor = 'rgba(255, 80, 0, 0.6)';
+                    // Draw sun lower on the horizon
+                    ctx.beginPath(); ctx.arc(width * 0.5, height * 0.85, 80, 0, Math.PI*2); ctx.fill();
                     ctx.shadowBlur = 0;
                 }
                 requestAnimationFrame(draw);
@@ -241,15 +262,16 @@
             requestAnimationFrame(update);
         }
 
+        // Apply gradients to the WHOLE body
         function updateSkyTheme() {
             const hour = new Date().getHours();
-            const banner = document.getElementById('skyBanner');
+            const body = document.body;
             const greeting = document.getElementById('timeGreeting');
 
-            if (hour >= 5 && hour < 8) { banner.style.background = "var(--sky-dawn)"; greeting.innerText = "Dawn Protocol 🌅"; } 
-            else if (hour >= 8 && hour < 17) { banner.style.background = "var(--sky-day)"; greeting.innerText = "Active Daytime ☀️"; } 
-            else if (hour >= 17 && hour < 20) { banner.style.background = "var(--sky-dusk)"; greeting.innerText = "Dusk Sequence 🌇"; } 
-            else { banner.style.background = "var(--sky-night)"; greeting.innerText = "Night Watch 🌙"; }
+            if (hour >= 5 && hour < 8) { body.style.background = "var(--sky-dawn)"; greeting.innerText = "Dawn Protocol 🌅"; } 
+            else if (hour >= 8 && hour < 17) { body.style.background = "var(--sky-day)"; greeting.innerText = "Active Daytime ☀️"; } 
+            else if (hour >= 17 && hour < 20) { body.style.background = "var(--sky-dusk)"; greeting.innerText = "Dusk Sequence 🌇"; } 
+            else { body.style.background = "var(--sky-night)"; greeting.innerText = "Night Watch 🌙"; }
         }
 
         function calculateDerivedMetrics(temp, hum, pres) {
