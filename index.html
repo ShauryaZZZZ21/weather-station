@@ -3,141 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atmosphere OS | Premium Weather Station</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <title>Atmosphere OS | Live Telemetry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #0b0c10;
-            --card-bg: rgba(31, 38, 52, 0.4);
-            --card-border: rgba(255, 255, 255, 0.08);
+            --bg-color: #050505;
+            --card-bg: rgba(20, 20, 25, 0.6);
+            --card-border: rgba(255, 255, 255, 0.05);
             --text-primary: #ffffff;
-            --text-secondary: #94a3b8;
+            --text-secondary: #8892b0;
+            --accent: #00f2fe;
             
             /* Dynamic Sky Gradients */
             --sky-dawn: linear-gradient(135deg, #f39c12, #d35400, #2c3e50);
             --sky-day: linear-gradient(135deg, #1cc4f2, #0072ff);
             --sky-dusk: linear-gradient(135deg, #2c3e50, #fd746c);
-            --sky-night: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --sky-night: linear-gradient(135deg, #090a0f, #10121a, #1a1c23);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-primary); min-height: 100vh; padding: 2rem 1rem; overflow-x: hidden; }
+        body { background-color: var(--bg-color); color: var(--text-primary); min-height: 100vh; padding: 2rem; display: flex; justify-content: center; align-items: center; }
 
-        .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+        .container { width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 2rem; }
 
         /* Dynamic Sky Banner */
         .sky-banner {
-            border-radius: 24px;
-            padding: 2.5rem;
-            text-align: left;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            transition: background 1s ease-in-out;
-            background: var(--sky-night); /* Fallback */
+            border-radius: 24px; padding: 3rem; position: relative; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); transition: background 2s ease;
+            animation: fadeDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        .sky-banner::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.15), transparent 40%);
+        .sky-banner::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(5,5,5,0.8), transparent);
         }
-        .sky-banner h1 { font-size: 2.5rem; font-weight: 800; tracking: -0.05em; margin-bottom: 0.5rem; }
-        .sky-banner p { color: rgba(255, 255, 255, 0.8); font-size: 1rem; font-weight: 500; }
+        .sky-banner-content { position: relative; z-index: 2; }
+        .sky-banner h1 { font-size: 3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+        .sky-banner p { color: #a1a1aa; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        
+        /* Live Ping Dot */
+        .ping { width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
 
-        /* Real-time Grid */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
-        .metric-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            transition: transform 0.3s ease, border-color 0.3s ease;
+        /* Bento Grid */
+        .bento-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;
         }
-        .metric-card:hover { transform: translateY(-4px); border-color: rgba(255, 255, 255, 0.15); }
-        .metric-label { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
-        .metric-value { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em; }
-        .metric-unit { font-size: 1.25rem; font-weight: 500; color: var(--text-secondary); }
 
-        /* Custom Accents for values */
-        #temp-val { color: #ff6384; }
-        #hum-val { color: #36a2eb; }
-        #pres-val { color: #4bc0c0; }
-        #aq-val { color: #9966ff; }
-
-        /* Chart Canvas Container */
-        .chart-container {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        .bento-card {
+            background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border); border-radius: 24px; padding: 2rem;
+            display: flex; flex-direction: column; justify-content: space-between;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0; transform: translateY(30px);
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        
+        /* Staggered Animations */
+        .bento-card:nth-child(1) { animation-delay: 0.1s; }
+        .bento-card:nth-child(2) { animation-delay: 0.2s; }
+        .bento-card:nth-child(3) { animation-delay: 0.3s; }
+        .bento-card:nth-child(4) { animation-delay: 0.4s; }
+        .bento-card:nth-child(5) { animation-delay: 0.5s; }
+        .bento-card:nth-child(6) { animation-delay: 0.6s; }
+
+        .bento-card:hover { transform: translateY(-8px) scale(1.02); background: rgba(30, 30, 38, 0.8); border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+
+        .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .metric-title { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; }
+        
+        .metric-data { display: flex; align-items: baseline; gap: 0.5rem; }
+        .metric-value { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }
+        .metric-unit { font-size: 1.2rem; font-weight: 600; color: var(--text-secondary); }
+
+        /* Specific Colors */
+        .c-temp { color: #ff6b6b; } .c-hum { color: #4facfe; } .c-pres { color: #00f2fe; }
+        .c-aq { color: #a18cd1; } .c-feel { color: #ff9a9e; } .c-rain { color: #43e97b; }
+
+        /* Keyframes */
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="sky-banner" id="skyBanner">
-            <h1 id="timeGreeting">Atmosphere OS</h1>
-            <p id="statusText">Initialising secure cloud stream...</p>
-        </div>
-
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <span class="metric-label">Temperature</span>
-                <div><span class="metric-value" id="temp-val">--</span><span class="metric-unit"> °C</span></div>
-            </div>
-            <div class="metric-card">
-                <span class="metric-label">Humidity</span>
-                <div><span class="metric-value" id="hum-val">--</span><span class="metric-unit"> %</span></div>
-            </div>
-            <div class="metric-card">
-                <span class="metric-label">Barometric Pressure</span>
-                <div><span class="metric-value" id="pres-val">--</span><span class="metric-unit"> hPa</span></div>
-            </div>
-            <div class="metric-card">
-                <span class="metric-label">Air Quality Index</span>
-                <div><span class="metric-value" id="aq-val">--</span><span class="metric-unit"> Raw</span></div>
+            <div class="sky-banner-content">
+                <h1 id="timeGreeting">Atmosphere OS</h1>
+                <p><span class="ping"></span> Live AWS Telemetry Stream</p>
             </div>
         </div>
 
-        <div class="chart-container">
-            <canvas id="premiumChart"></canvas>
+        <div class="bento-grid">
+            <div class="bento-card">
+                <div class="metric-header"><span class="metric-title">Temperature</span><span>🌡️</span></div>
+                <div class="metric-data"><span class="metric-value c-temp" id="val-temp">0</span><span class="metric-unit">°C</span></div>
+            </div>
+            
+            <div class="bento-card">
+                <div class="metric-header"><span class="metric-title">Humidity</span><span>💧</span></div>
+                <div class="metric-data"><span class="metric-value c-hum" id="val-hum">0</span><span class="metric-unit">%</span></div>
+            </div>
+
+            <div class="bento-card">
+                <div class="metric-header"><span class="metric-title">Barometric Pressure</span><span>🌪️</span></div>
+                <div class="metric-data"><span class="metric-value c-pres" id="val-pres">0</span><span class="metric-unit">hPa</span></div>
+            </div>
+
+            <div class="bento-card">
+                <div class="metric-header"><span class="metric-title">Air Quality (Raw)</span><span>🌫️</span></div>
+                <div class="metric-data"><span class="metric-value c-aq" id="val-aq">0</span><span class="metric-unit">Idx</span></div>
+            </div>
+
+            <div class="bento-card">
+                <div class="metric-header"><span class="metric-title">Feels Like</span><span>👕</span></div>
+                <div class="metric-data"><span class="metric-value c-feel" id="val-feel">0</span><span class="metric-unit">°C</span></div>
+            </div>
+
+            <div class="bento-card">
+                <div class="metric-header"><span class="metric-title">Rain Probability</span><span>☔</span></div>
+                <div class="metric-data"><span class="metric-value c-rain" id="val-rain">0</span><span class="metric-unit">%</span></div>
+            </div>
         </div>
     </div>
 
     <script>
-        let weatherChart;
         const apiEndpoint = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather';
 
-        // Dynamic Sky Background Engine
+        // Stores the current numbers so we can animate the transition
+        let currentValues = { temp: 0, hum: 0, pres: 0, aq: 0, feel: 0, rain: 0 };
+
+        // Premium Number Ticking Animation
+        function animateValue(id, key, endValue, isFloat = false) {
+            const obj = document.getElementById(id);
+            const startValue = currentValues[key];
+            if (startValue === endValue) return;
+
+            const duration = 1000; // 1 second animation
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease-out curve for smooth deceleration
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = startValue + (endValue - startValue) * easeOut;
+
+                obj.innerText = isFloat ? current.toFixed(1) : Math.round(current);
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    currentValues[key] = endValue; // Save new state
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Dynamic Sky Engine
         function updateSkyTheme() {
             const hour = new Date().getHours();
             const banner = document.getElementById('skyBanner');
             const greeting = document.getElementById('timeGreeting');
 
-            if (hour >= 5 && hour < 8) {
-                banner.style.background = "var(--sky-dawn)";
-                greeting.innerText = "Good Morning 🌅";
-            } else if (hour >= 8 && hour < 17) {
-                banner.style.background = "var(--sky-day)";
-                greeting.innerText = "Live Dashboard ☀️";
-            } else if (hour >= 17 && hour < 20) {
-                banner.style.background = "var(--sky-dusk)";
-                greeting.innerText = "Good Evening 🌇";
-            } else {
-                banner.style.background = "var(--sky-night)";
-                greeting.innerText = "Night Watch 🌙";
+            if (hour >= 5 && hour < 8) { banner.style.background = "var(--sky-dawn)"; greeting.innerText = "Dawn Protocol 🌅"; } 
+            else if (hour >= 8 && hour < 17) { banner.style.background = "var(--sky-day)"; greeting.innerText = "Active Daytime ☀️"; } 
+            else if (hour >= 17 && hour < 20) { banner.style.background = "var(--sky-dusk)"; greeting.innerText = "Dusk Sequence 🌇"; } 
+            else { banner.style.background = "var(--sky-night)"; greeting.innerText = "Night Watch 🌙"; }
+        }
+
+        // The Math/Logic Engine for Derived Parameters
+        function calculateDerivedMetrics(temp, hum, pres) {
+            // 1. Apparent Temperature (Feels Like) using basic Heat Index approx
+            const feelsLike = temp + 0.33 * (hum / 100 * 6.105 * Math.exp(17.27 * temp / (237.7 + temp))) - 4.00;
+
+            // 2. Rain Probability Heuristic
+            // Low pressure (< 1005) & High Humidity (> 80%) = High Rain Chance
+            let rainChance = 0;
+            if (pres > 0) { // Ensure sensor is actually reading
+                const pressureFactor = Math.max(0, (1015 - pres) * 2.5); // Drops below 1015 increase chance
+                const humidityFactor = hum > 60 ? (hum - 60) * 1.5 : 0; // Humidity above 60% increases chance
+                rainChance = Math.min(100, pressureFactor + humidityFactor); // Cap at 100%
             }
+
+            return { feelsLike: feelsLike, rainChance: rainChance };
         }
 
         async function fetchWeatherData() {
@@ -146,70 +197,30 @@
                 if (!response.ok) throw new Error("Gateway Offline");
                 
                 const data = await response.json();
-                document.getElementById('statusText').innerText = "Telemetry synchronous. Updates active every 10s.";
+                const latest = data[0]; // Get newest data packet
 
-                // Take the absolute latest reading to update our bold metrics grid
-                const latest = data[0];
-                document.getElementById('temp-val').innerText = latest.temperature ? latest.temperature.toFixed(1) : '--';
-                document.getElementById('hum-val').innerText = latest.humidity ? latest.humidity.toFixed(1) : '--';
-                document.getElementById('pres-val').innerText = latest.pressure ? Math.round(latest.pressure) : '--';
-                document.getElementById('aq-val').innerText = latest.airQuality || '--';
+                // Calculate the Pro Max parameters
+                const derived = calculateDerivedMetrics(latest.temperature, latest.humidity, latest.pressure);
 
-                // Chronological sorting for the graph engine
-                const reversedData = data.reverse();
-                const labels = reversedData.map(item => {
-                    let date = new Date(item.timestamp * 1000);
-                    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                });
-                
-                const temps = reversedData.map(item => item.temperature);
-                const hums = reversedData.map(item => item.humidity);
-                const press = reversedData.map(item => item.pressure);
-                const airQuals = reversedData.map(item => item.airQuality);
-
-                drawChart(labels, temps, hums, press, airQuals);
+                // Trigger smooth ticking animations
+                animateValue('val-temp', 'temp', latest.temperature, true);
+                animateValue('val-hum', 'hum', latest.humidity, true);
+                animateValue('val-pres', 'pres', latest.pressure, false);
+                animateValue('val-aq', 'aq', latest.airQuality, false);
+                animateValue('val-feel', 'feel', derived.feelsLike, true);
+                animateValue('val-rain', 'rain', derived.rainChance, false);
 
             } catch (error) {
                 console.error("Pipeline Error:", error);
-                document.getElementById('statusText').innerText = "System Failure: Lost connection to AWS Cloud.";
+                document.getElementById('timeGreeting').innerText = "SYSTEM OFFLINE";
+                document.querySelector('.ping').style.backgroundColor = "red";
             }
         }
 
-        function drawChart(labels, temps, hums, press, airQuals) {
-            const ctx = document.getElementById('premiumChart').getContext('2d');
-            if (weatherChart) { weatherChart.destroy(); }
-
-            // Chart JS Dark Styling configuration
-            Chart.defaults.color = '#94a3b8';
-            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
-
-            weatherChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Temperature (°C)', data: temps, borderColor: '#ff6384', backgroundColor: 'rgba(255, 99, 132, 0.05)', fill: true, yAxisID: 'y', tension: 0.3, borderWidth: 3 },
-                        { label: 'Humidity (%)', data: hums, borderColor: '#36a2eb', backgroundColor: 'rgba(54, 162, 235, 0.05)', fill: true, yAxisID: 'y', tension: 0.3, borderWidth: 3 },
-                        { label: 'Pressure (hPa)', data: press, borderColor: '#4bc0c0', yAxisID: 'y1', tension: 0.3, borderWidth: 2, borderDash: [5, 5] },
-                        { label: 'Air Quality (Raw)', data: airQuals, borderColor: '#9966ff', yAxisID: 'y1', tension: 0.3, borderWidth: 2 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'top', labels: { font: { weight: '500' } } } },
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Ambient Properties' } },
-                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Atmospheric Vectors' }, grid: { drawOnChartArea: false } }
-                    }
-                }
-            });
-        }
-
-        // Initialize UI Elements
+        // Boot Sequence
         updateSkyTheme();
         fetchWeatherData();
-        setInterval(fetchWeatherData, 10000); // 10-second high-precision refresh cadence
+        setInterval(fetchWeatherData, 10000); // 10s ping
     </script>
 </body>
 </html>
