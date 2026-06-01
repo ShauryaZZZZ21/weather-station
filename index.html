@@ -131,23 +131,20 @@
     <script>
         const apiEndpoint = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather';
 
-        // Stores the current numbers so we can animate the transition
         let currentValues = { temp: 0, hum: 0, pres: 0, aq: 0, feel: 0, rain: 0 };
 
-        // Premium Number Ticking Animation
         function animateValue(id, key, endValue, isFloat = false) {
             const obj = document.getElementById(id);
             const startValue = currentValues[key];
             if (startValue === endValue) return;
 
-            const duration = 1000; // 1 second animation
+            const duration = 1000; 
             const startTime = performance.now();
 
             function update(currentTime) {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
                 
-                // Ease-out curve for smooth deceleration
                 const easeOut = 1 - Math.pow(1 - progress, 3);
                 const current = startValue + (endValue - startValue) * easeOut;
 
@@ -156,13 +153,12 @@
                 if (progress < 1) {
                     requestAnimationFrame(update);
                 } else {
-                    currentValues[key] = endValue; // Save new state
+                    currentValues[key] = endValue; 
                 }
             }
             requestAnimationFrame(update);
         }
 
-        // Dynamic Sky Engine
         function updateSkyTheme() {
             const hour = new Date().getHours();
             const banner = document.getElementById('skyBanner');
@@ -174,18 +170,15 @@
             else { banner.style.background = "var(--sky-night)"; greeting.innerText = "Night Watch 🌙"; }
         }
 
-        // The Math/Logic Engine for Derived Parameters
         function calculateDerivedMetrics(temp, hum, pres) {
-            // 1. Apparent Temperature (Feels Like) using basic Heat Index approx
             const feelsLike = temp + 0.33 * (hum / 100 * 6.105 * Math.exp(17.27 * temp / (237.7 + temp))) - 4.00;
 
-            // 2. Rain Probability Heuristic
-            // Low pressure (< 1005) & High Humidity (> 80%) = High Rain Chance
             let rainChance = 0;
-            if (pres > 0) { // Ensure sensor is actually reading
-                const pressureFactor = Math.max(0, (1015 - pres) * 2.5); // Drops below 1015 increase chance
-                const humidityFactor = hum > 60 ? (hum - 60) * 1.5 : 0; // Humidity above 60% increases chance
-                rainChance = Math.min(100, pressureFactor + humidityFactor); // Cap at 100%
+            if (pres > 0) { 
+                // Adjusted baseline for ~900m elevation (Normal pressure is ~914 hPa)
+                const pressureFactor = Math.max(0, (914 - pres) * 3.5); 
+                const humidityFactor = hum > 60 ? (hum - 60) * 1.5 : 0; 
+                rainChance = Math.min(100, pressureFactor + humidityFactor); 
             }
 
             return { feelsLike: feelsLike, rainChance: rainChance };
@@ -197,12 +190,14 @@
                 if (!response.ok) throw new Error("Gateway Offline");
                 
                 const data = await response.json();
-                const latest = data[0]; // Get newest data packet
+                
+                // BULLETPROOF SORT: Mathematically find the object with the highest timestamp
+                const latest = data.reduce((prev, current) => {
+                    return (prev.timestamp > current.timestamp) ? prev : current;
+                });
 
-                // Calculate the Pro Max parameters
                 const derived = calculateDerivedMetrics(latest.temperature, latest.humidity, latest.pressure);
 
-                // Trigger smooth ticking animations
                 animateValue('val-temp', 'temp', latest.temperature, true);
                 animateValue('val-hum', 'hum', latest.humidity, true);
                 animateValue('val-pres', 'pres', latest.pressure, false);
@@ -217,10 +212,9 @@
             }
         }
 
-        // Boot Sequence
         updateSkyTheme();
         fetchWeatherData();
-        setInterval(fetchWeatherData, 10000); // 10s ping
+        setInterval(fetchWeatherData, 10000); 
     </script>
 </body>
 </html>
