@@ -55,7 +55,7 @@
 
         /* Color Coding */
         .c-temp { color: #ff6b6b; } .c-hum { color: #4facfe; } .c-pres { color: #00f2fe; }
-        .c-aq { color: #a18cd1; } .c-gas { color: #f6d365; } .c-rain { color: #43e97b; }
+        .c-aq { color: #a18cd1; transition: color 0.4s ease; } .c-gas { color: #f6d365; } .c-rain { color: #43e97b; }
         .c-wind { color: #fdfbfb; } .c-feel { color: #ff9a9e; } .c-chill { color: #a1c4fd; }
 
         @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
@@ -73,22 +73,34 @@
         </div>
 
         <div class="bento-grid">
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Temperature</span><span>🌡️</span></div><div class="metric-data"><span class="metric-value c-temp" id="val-temp">0</span><span class="metric-unit">°C</span></div></div>
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Humidity</span><span>💧</span></div><div class="metric-data"><span class="metric-value c-hum" id="val-hum">0</span><span class="metric-unit">%</span></div></div>
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Pressure</span><span>🌪️</span></div><div class="metric-data"><span class="metric-value c-pres" id="val-pres">0</span><span class="metric-unit">hPa</span></div></div>
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Temperature</span><span>🌡️</span></div><div class="metric-data"><span class="metric-value c-temp" id="val-temp" data-val="0">0</span><span class="metric-unit">°C</span></div></div>
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Humidity</span><span>💧</span></div><div class="metric-data"><span class="metric-value c-hum" id="val-hum" data-val="0">0</span><span class="metric-unit">%</span></div></div>
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Pressure</span><span>🌪️</span></div><div class="metric-data"><span class="metric-value c-pres" id="val-pres" data-val="0">0</span><span class="metric-unit">hPa</span></div></div>
 
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Air Quality (Raw)</span><span>🌫️</span></div><div class="metric-data"><span class="metric-value c-aq" id="val-aq">0</span><span class="metric-unit">Idx</span></div></div>
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Combustible Gas Risk</span><span>⚠️</span></div><div class="metric-data"><span class="metric-value c-gas" id="val-gas">0</span><span class="metric-unit">%</span></div></div>
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Rain Probability</span><span>☔</span></div><div class="metric-data"><span class="metric-value c-rain" id="val-rain">0</span><span class="metric-unit">%</span></div></div>
+            <div class="bento-card" id="aqi-card" style="transition: border-bottom 0.4s ease;">
+                <div class="metric-header">
+                    <span class="metric-title">Air Quality</span><span>🌫️</span>
+                </div>
+                <div class="metric-data" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem;">
+                    <div>
+                        <span class="metric-value c-aq" id="val-aq" data-val="0">0</span>
+                        <span class="metric-unit">AQI</span>
+                    </div>
+                    <span id="val-aq-label" style="font-size: 1.05rem; font-weight: 700; color: #a18cd1; transition: color 0.4s ease;">Analyzing...</span>
+                </div>
+            </div>
 
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Wind Speed</span><span>💨</span></div><div class="metric-data"><span class="metric-value c-wind" id="val-wind">0</span><span class="metric-unit">km/h</span></div></div>
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Feels Like</span><span>👕</span></div><div class="metric-data"><span class="metric-value c-feel" id="val-feel">0</span><span class="metric-unit">°C</span></div></div>
-            <div class="bento-card"><div class="metric-header"><span class="metric-title">Wind Chill</span><span>❄️</span></div><div class="metric-data"><span class="metric-value c-chill" id="val-chill">0</span><span class="metric-unit">°C</span></div></div>
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Combustible Gas Risk</span><span>⚠️</span></div><div class="metric-data"><span class="metric-value c-gas" id="val-gas" data-val="0">0</span><span class="metric-unit">%</span></div></div>
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Rain Probability</span><span>☔</span></div><div class="metric-data"><span class="metric-value c-rain" id="val-rain" data-val="0">0</span><span class="metric-unit">%</span></div></div>
+
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Wind Speed</span><span>💨</span></div><div class="metric-data"><span class="metric-value c-wind" id="val-wind" data-val="0">0</span><span class="metric-unit">km/h</span></div></div>
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Feels Like</span><span>👕</span></div><div class="metric-data"><span class="metric-value c-feel" id="val-feel" data-val="0">0</span><span class="metric-unit">°C</span></div></div>
+            <div class="bento-card"><div class="metric-header"><span class="metric-title">Wind Chill</span><span>❄️</span></div><div class="metric-data"><span class="metric-value c-chill" id="val-chill" data-val="0">0</span><span class="metric-unit">°C</span></div></div>
         </div>
     </div>
 
     <script>
-    // 1. PASTE YOUR AWS LINK HERE
+    // 1. YOUR API LINK
     const apiEndpoint = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather'; 
 
     // --- 1. FULL-SCREEN LIVE CANVAS ENGINE ---
@@ -136,16 +148,46 @@
         return { feelsLike: feelsLike, rainChance: rainChance, windChill: windChill, gasRisk: gasRisk };
     }
 
-    function forceUpdate(id, rawValue, isFloat = false) {
+    // --- NEW: THE ANIMATION ENGINE ---
+    function animateValue(obj, start, end, duration, isFloat) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            
+            // Easing function (easeOutQuart) for a smooth fast-to-slow spin
+            const easeProgress = 1 - Math.pow(1 - progress, 4);
+            const currentVal = start + (end - start) * easeProgress;
+            
+            if (isFloat) {
+                obj.innerText = currentVal.toFixed(1);
+            } else {
+                obj.innerText = Math.round(currentVal);
+            }
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                // Lock exact final value
+                obj.innerText = isFloat ? end.toFixed(1) : Math.round(end);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    function forceUpdate(id, targetValue, isFloat = false) {
         try {
             const obj = document.getElementById(id);
-            if (isFloat) { obj.innerText = rawValue.toFixed(1); } 
-            else { obj.innerText = Math.round(rawValue); }
+            const startValue = parseFloat(obj.getAttribute('data-val')) || 0;
+            
+            if (startValue !== targetValue) {
+                animateValue(obj, startValue, targetValue, 1500, isFloat); // 1.5 second animation
+                obj.setAttribute('data-val', targetValue); // Save new value for next time
+            }
         } catch (e) { console.error("Failed to update card: " + id, e); }
     }
 
-    // --- THE DYNAMODB DECODER RING ---
-    // Safely breaks open AWS {"N": "10"} and {"S": "10"} data wrappers
+    // --- AWS DECODERS ---
     function getAwsVal(field) {
         if (field === null || field === undefined) return 0;
         if (typeof field === 'object') { return Number(field.N || field.S) || 0; }
@@ -159,8 +201,6 @@
         return new Date(val).getTime() || 0;
     }
 
-    // --- THE UNIVERSAL TIME FINDER ---
-    // Hunts down your custom DynamoDB partition key automatically
     function findTime(obj) {
         if (obj.timestamp) return getAwsTime(obj.timestamp);
         if (obj.Time) return getAwsTime(obj.Time);
@@ -177,6 +217,21 @@
         return 0; 
     }
 
+    // --- AQI BLENDER ---
+    function formatAQI(rawSensorValue) {
+        let aqiCategory = ""; let aqiColor = "";
+        let standardAQI = Math.round(rawSensorValue); 
+
+        if (standardAQI <= 50) { aqiCategory = "Good 🟢"; aqiColor = "#00E400"; } 
+        else if (standardAQI <= 100) { aqiCategory = "Moderate 🟡"; aqiColor = "#FFFF00"; } 
+        else if (standardAQI <= 150) { aqiCategory = "Unhealthy for Sensitive Groups 🟠"; aqiColor = "#FF7E00"; } 
+        else if (standardAQI <= 200) { aqiCategory = "Unhealthy 🔴"; aqiColor = "#FF0000"; } 
+        else if (standardAQI <= 300) { aqiCategory = "Very Unhealthy 🟣"; aqiColor = "#8F3F97"; } 
+        else { standardAQI = Math.min(standardAQI, 500); aqiCategory = "Hazardous 🟤"; aqiColor = "#7E0023"; }
+
+        return { number: standardAQI, label: aqiCategory, color: aqiColor };
+    }
+
     // --- FETCH ENGINE ---
     async function fetchWeatherData() {
         try {
@@ -186,7 +241,6 @@
             
             const rawData = await response.json();
             
-            // Check if AWS wrapped it in 'Items' or 'body'
             let dataArray = [];
             if (rawData.Items) dataArray = rawData.Items;
             else if (rawData.body) dataArray = JSON.parse(rawData.body);
@@ -195,13 +249,11 @@
 
             if (dataArray.length === 0) return;
 
-            // 🔥 FIX: Use the Universal Time Finder to guarantee the newest data is at index 0
             dataArray.sort((a, b) => findTime(b) - findTime(a));
             const latest = dataArray[0];
 
             console.log("🔥 UNWRAPPED NEWEST DATA:", latest);
 
-            // Extract the pure math numbers
             const temp = getAwsVal(latest.temperature);
             const hum = getAwsVal(latest.humidity);
             const pres = getAwsVal(latest.pressure);
@@ -210,16 +262,24 @@
 
             const derived = calculateDerivedMetrics(temp, hum, pres, wind, aq);
 
-            // Inject to HTML
+            // Animated Updates!
             forceUpdate('val-temp', temp, true);
             forceUpdate('val-hum', hum, true);
             forceUpdate('val-pres', pres, false);
-            forceUpdate('val-aq', aq, false);
             forceUpdate('val-gas', derived.gasRisk, false);
             forceUpdate('val-rain', derived.rainChance, false);
             forceUpdate('val-wind', wind, true);
             forceUpdate('val-feel', derived.feelsLike, true);
             forceUpdate('val-chill', derived.windChill, true);
+
+            // Animated AQI Filter
+            let formattedAQI = formatAQI(aq);
+            forceUpdate('val-aq', formattedAQI.number, false);
+            document.getElementById('val-aq-label').innerText = formattedAQI.label;
+            
+            document.getElementById('val-aq').style.color = formattedAQI.color;
+            document.getElementById('val-aq-label').style.color = formattedAQI.color;
+            document.getElementById('aqi-card').style.borderBottom = `5px solid ${formattedAQI.color}`;
 
             document.querySelector('.ping').style.backgroundColor = "#10b981";
 
@@ -233,6 +293,6 @@
     updateSkyTheme();
     fetchWeatherData();
     setInterval(fetchWeatherData, 10000); 
-</script>
+    </script>
 </body>
 </html>
