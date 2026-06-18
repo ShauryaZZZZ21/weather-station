@@ -118,17 +118,6 @@
         draw();
     }
 
-    let currentValues = { temp: 0, hum: 0, pres: 0, aq: 0, gas: 0, rain: 0, wind: 0, feel: 0, chill: 0 };
-
-    function animateValue(id, key, endValue, isFloat = false) {
-        const obj = document.getElementById(id);
-        if (currentValues[key] === endValue) return; 
-        
-        // Failsafe: instantly update the text so we don't rely purely on the animation loop
-        currentValues[key] = endValue;
-        obj.innerText = isFloat ? endValue.toFixed(1) : Math.round(endValue);
-    }
-
     function updateSkyTheme() {
         const hour = new Date().getHours(); const body = document.body; const greeting = document.getElementById('timeGreeting');
         if (hour >= 5 && hour < 8) { body.style.background = "var(--sky-dawn)"; greeting.innerText = "Dawn Protocol 🌅"; } 
@@ -147,46 +136,58 @@
         return { feelsLike: feelsLike, rainChance: rainChance, windChill: windChill, gasRisk: gasRisk };
     }
 
-    // --- AGGRESSIVE DATA FETCHER ---
+    // --- BRUTE-FORCE HTML INJECTOR ---
+    function forceUpdate(id, rawValue, isFloat = false) {
+        try {
+            // Force the AWS data to become a pure math number, defaulting to 0 if it fails
+            const safeNumber = Number(rawValue) || 0; 
+            const obj = document.getElementById(id);
+            
+            // Instantly change the text on the screen
+            if (isFloat) {
+                obj.innerText = safeNumber.toFixed(1);
+            } else {
+                obj.innerText = Math.round(safeNumber);
+            }
+        } catch (e) {
+            console.error("Failed to update card: " + id, e);
+        }
+    }
+
+    // --- FETCH ENGINE ---
     async function fetchWeatherData() {
         try {
-            // Force a completely unique URL every single time to destroy browser caching
+            // Bust the browser cache
             const bypassCacheUrl = apiEndpoint + (apiEndpoint.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
             
             const response = await fetch(bypassCacheUrl, { cache: 'no-store' });
             if (!response.ok) throw new Error("Gateway Offline");
             
             const rawData = await response.json();
-            
-            // Handle both flat arrays and AWS API Gateway { Items: [] } wrappers
             let dataArray = rawData.Items ? rawData.Items : rawData;
 
-            if (!Array.isArray(dataArray) || dataArray.length === 0) {
-                console.warn("Database is empty or format is wrong.");
-                return;
-            }
+            if (!Array.isArray(dataArray) || dataArray.length === 0) return;
 
-            // Force sort the array to guarantee we ALWAYS grab the highest timestamp
+            // Sort newest to oldest
             dataArray.sort((a, b) => b.timestamp - a.timestamp);
             const latest = dataArray[0];
 
-            // 🚨 WIRE-TAP PRINTS TO DEVELOPER CONSOLE 🚨
-            console.log("🔥 NEWEST AWS DATA AT " + new Date().toLocaleTimeString() + " :", latest);
+            console.log("🔥 INJECTING TO HTML:", latest);
 
-            const wind = latest.windSpeed || 0; 
-            const derived = calculateDerivedMetrics(latest.temperature, latest.humidity, latest.pressure, wind, latest.airQuality);
+            const wind = Number(latest.windSpeed) || 0; 
+            const derived = calculateDerivedMetrics(Number(latest.temperature), Number(latest.humidity), Number(latest.pressure), wind, Number(latest.airQuality));
 
-            animateValue('val-temp', 'temp', latest.temperature, true);
-            animateValue('val-hum', 'hum', latest.humidity, true);
-            animateValue('val-pres', 'pres', latest.pressure, false);
-            animateValue('val-aq', 'aq', latest.airQuality, false);
-            animateValue('val-gas', 'gas', derived.gasRisk, false);
-            animateValue('val-rain', 'rain', derived.rainChance, false);
-            animateValue('val-wind', 'wind', wind, true);
-            animateValue('val-feel', 'feel', derived.feelsLike, true);
-            animateValue('val-chill', 'chill', derived.windChill, true);
+            // Force update every single card on the screen
+            forceUpdate('val-temp', latest.temperature, true);
+            forceUpdate('val-hum', latest.humidity, true);
+            forceUpdate('val-pres', latest.pressure, false);
+            forceUpdate('val-aq', latest.airQuality, false);
+            forceUpdate('val-gas', derived.gasRisk, false);
+            forceUpdate('val-rain', derived.rainChance, false);
+            forceUpdate('val-wind', wind, true);
+            forceUpdate('val-feel', derived.feelsLike, true);
+            forceUpdate('val-chill', derived.windChill, true);
 
-            // Ensure the ping indicator is green
             document.querySelector('.ping').style.backgroundColor = "#10b981";
 
         } catch (error) {
