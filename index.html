@@ -169,7 +169,12 @@
             if (!Array.isArray(dataArray) || dataArray.length === 0) return;
 
             // Sort newest to oldest
-            dataArray.sort((a, b) => b.timestamp - a.timestamp);
+            dataArray.sort((a, b) => {
+                // Force AWS timestamps into pure numbers, whether they are strings, integers, or dates
+                const timeA = Number(a.timestamp) || new Date(a.timestamp).getTime() || 0;
+                const timeB = Number(b.timestamp) || new Date(b.timestamp).getTime() || 0;
+                return timeB - timeA;
+            });
             const latest = dataArray[0];
 
             console.log("🔥 INJECTING TO HTML:", latest);
