@@ -88,116 +88,118 @@
     </div>
 
     <script>
-        const apiEndpoint = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather'; // <-- PASTE LINK HERE
+    // 1. PASTE YOUR AWS LINK HERE
+    const apiEndpoint = 'https://1w7vf8sbbg.execute-api.ap-south-1.amazonaws.com/weather'; 
 
-        // --- 1. FULL-SCREEN LIVE CANVAS ENGINE ---
-        function initSkyEngine() {
-            const canvas = document.getElementById('skyCanvas');
-            const ctx = canvas.getContext('2d');
-            let width = canvas.width = window.innerWidth;
-            let height = canvas.height = window.innerHeight;
+    // --- 1. FULL-SCREEN LIVE CANVAS ENGINE ---
+    function initSkyEngine() {
+        const canvas = document.getElementById('skyCanvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+        const stars = Array.from({length: 200}, () => ({ x: Math.random() * width, y: Math.random() * height, r: Math.random() * 1.5, alpha: Math.random(), speed: (Math.random() * 0.02) + 0.005 }));
+        const clouds = Array.from({length: 6}, () => ({ x: Math.random() * width, y: (Math.random() * height * 0.4), speed: (Math.random() * 0.4) + 0.1, size: (Math.random() * 30) + 20 }));
 
-            window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
-
-            const stars = Array.from({length: 200}, () => ({ x: Math.random() * width, y: Math.random() * height, r: Math.random() * 1.5, alpha: Math.random(), speed: (Math.random() * 0.02) + 0.005 }));
-            const clouds = Array.from({length: 6}, () => ({ x: Math.random() * width, y: (Math.random() * height * 0.4), speed: (Math.random() * 0.4) + 0.1, size: (Math.random() * 30) + 20 }));
-
-            function draw() {
-                ctx.clearRect(0, 0, width, height);
-                const hour = new Date().getHours();
-
-                if (hour < 5 || hour >= 20) {
-                    stars.forEach(s => { ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); s.alpha += s.speed; if(s.alpha >= 1 || s.alpha <= 0) s.speed *= -1; });
-                    ctx.fillStyle = 'rgba(255, 255, 240, 0.9)'; ctx.shadowBlur = 40; ctx.shadowColor = 'rgba(255, 255, 240, 0.3)'; ctx.beginPath(); ctx.arc(width * 0.8, height * 0.2, 40, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-                } else if (hour >= 8 && hour < 17) {
-                    ctx.fillStyle = 'rgba(255, 225, 120, 1)'; ctx.shadowBlur = 80; ctx.shadowColor = 'rgba(255, 200, 50, 0.5)'; ctx.beginPath(); ctx.arc(width * 0.8, height * 0.2, 60, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; clouds.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); ctx.arc(c.x + c.size*1.2, c.y - c.size*0.3, c.size*1.2, 0, Math.PI*2); ctx.arc(c.x + c.size*2.2, c.y, c.size*0.9, 0, Math.PI*2); ctx.fill(); c.x += c.speed; if(c.x > width + 100) c.x = -150; });
-                } else {
-                    ctx.fillStyle = 'rgba(255, 100, 40, 0.95)'; ctx.shadowBlur = 100; ctx.shadowColor = 'rgba(255, 80, 0, 0.6)'; ctx.beginPath(); ctx.arc(width * 0.5, height * 0.85, 80, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-                }
-                requestAnimationFrame(draw);
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            const hour = new Date().getHours();
+            if (hour < 5 || hour >= 20) {
+                stars.forEach(s => { ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); s.alpha += s.speed; if(s.alpha >= 1 || s.alpha <= 0) s.speed *= -1; });
+                ctx.fillStyle = 'rgba(255, 255, 240, 0.9)'; ctx.shadowBlur = 40; ctx.shadowColor = 'rgba(255, 255, 240, 0.3)'; ctx.beginPath(); ctx.arc(width * 0.8, height * 0.2, 40, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+            } else if (hour >= 8 && hour < 17) {
+                ctx.fillStyle = 'rgba(255, 225, 120, 1)'; ctx.shadowBlur = 80; ctx.shadowColor = 'rgba(255, 200, 50, 0.5)'; ctx.beginPath(); ctx.arc(width * 0.8, height * 0.2, 60, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; clouds.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); ctx.arc(c.x + c.size*1.2, c.y - c.size*0.3, c.size*1.2, 0, Math.PI*2); ctx.arc(c.x + c.size*2.2, c.y, c.size*0.9, 0, Math.PI*2); ctx.fill(); c.x += c.speed; if(c.x > width + 100) c.x = -150; });
+            } else {
+                ctx.fillStyle = 'rgba(255, 100, 40, 0.95)'; ctx.shadowBlur = 100; ctx.shadowColor = 'rgba(255, 80, 0, 0.6)'; ctx.beginPath(); ctx.arc(width * 0.5, height * 0.85, 80, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
             }
-            draw();
+            requestAnimationFrame(draw);
         }
+        draw();
+    }
 
-        // --- 2. AWS DATA PIPELINE & MATH ENGINE ---
-        let currentValues = { temp: 0, hum: 0, pres: 0, aq: 0, gas: 0, rain: 0, wind: 0, feel: 0, chill: 0 };
+    let currentValues = { temp: 0, hum: 0, pres: 0, aq: 0, gas: 0, rain: 0, wind: 0, feel: 0, chill: 0 };
 
-        function animateValue(id, key, endValue, isFloat = false) {
-            const obj = document.getElementById(id);
-            const startValue = currentValues[key];
-            if (startValue === endValue) return;
-            const duration = 1000; const startTime = performance.now();
-            function update(currentTime) {
-                const progress = Math.min((currentTime - startTime) / duration, 1);
-                const current = startValue + (endValue - startValue) * (1 - Math.pow(1 - progress, 3));
-                obj.innerText = isFloat ? current.toFixed(1) : Math.round(current);
-                if (progress < 1) { requestAnimationFrame(update); } else { currentValues[key] = endValue; }
-            }
-            requestAnimationFrame(update);
-        }
+    function animateValue(id, key, endValue, isFloat = false) {
+        const obj = document.getElementById(id);
+        if (currentValues[key] === endValue) return; 
+        
+        // Failsafe: instantly update the text so we don't rely purely on the animation loop
+        currentValues[key] = endValue;
+        obj.innerText = isFloat ? endValue.toFixed(1) : Math.round(endValue);
+    }
 
-        function updateSkyTheme() {
-            const hour = new Date().getHours(); const body = document.body; const greeting = document.getElementById('timeGreeting');
-            if (hour >= 5 && hour < 8) { body.style.background = "var(--sky-dawn)"; greeting.innerText = "Dawn Protocol 🌅"; } 
-            else if (hour >= 8 && hour < 17) { body.style.background = "var(--sky-day)"; greeting.innerText = "Active Daytime ☀️"; } 
-            else if (hour >= 17 && hour < 20) { body.style.background = "var(--sky-dusk)"; greeting.innerText = "Dusk Sequence 🌇"; } 
-            else { body.style.background = "var(--sky-night)"; greeting.innerText = "Night Watch 🌙"; }
-        }
+    function updateSkyTheme() {
+        const hour = new Date().getHours(); const body = document.body; const greeting = document.getElementById('timeGreeting');
+        if (hour >= 5 && hour < 8) { body.style.background = "var(--sky-dawn)"; greeting.innerText = "Dawn Protocol 🌅"; } 
+        else if (hour >= 8 && hour < 17) { body.style.background = "var(--sky-day)"; greeting.innerText = "Active Daytime ☀️"; } 
+        else if (hour >= 17 && hour < 20) { body.style.background = "var(--sky-dusk)"; greeting.innerText = "Dusk Sequence 🌇"; } 
+        else { body.style.background = "var(--sky-night)"; greeting.innerText = "Night Watch 🌙"; }
+    }
 
-        function calculateDerivedMetrics(temp, hum, pres, windSpeed, rawAq) {
-            const feelsLike = temp + 0.33 * (hum / 100 * 6.105 * Math.exp(17.27 * temp / (237.7 + temp))) - 4.00;
+    function calculateDerivedMetrics(temp, hum, pres, windSpeed, rawAq) {
+        const feelsLike = temp + 0.33 * (hum / 100 * 6.105 * Math.exp(17.27 * temp / (237.7 + temp))) - 4.00;
+        let rainChance = 0;
+        if (pres > 0) { const pressureFactor = Math.max(0, (914 - pres) * 3.5); const humidityFactor = hum > 60 ? (hum - 60) * 1.5 : 0; rainChance = Math.min(100, pressureFactor + humidityFactor); }
+        let windChill = temp;
+        if (temp <= 10 && windSpeed > 4.8) { windChill = 13.12 + 0.6215 * temp - 11.37 * Math.pow(windSpeed, 0.16) + 0.3965 * temp * Math.pow(windSpeed, 0.16); }
+        let gasRisk = Math.max(0, Math.min(100, ((rawAq - 500) / 3000) * 100));
+        return { feelsLike: feelsLike, rainChance: rainChance, windChill: windChill, gasRisk: gasRisk };
+    }
+
+    // --- AGGRESSIVE DATA FETCHER ---
+    async function fetchWeatherData() {
+        try {
+            // Force a completely unique URL every single time to destroy browser caching
+            const bypassCacheUrl = apiEndpoint + (apiEndpoint.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
             
-            let rainChance = 0;
-            if (pres > 0) { const pressureFactor = Math.max(0, (914 - pres) * 3.5); const humidityFactor = hum > 60 ? (hum - 60) * 1.5 : 0; rainChance = Math.min(100, pressureFactor + humidityFactor); }
+            const response = await fetch(bypassCacheUrl, { cache: 'no-store' });
+            if (!response.ok) throw new Error("Gateway Offline");
             
-            // Wind Chill Formula (Only active <= 10C and wind > 4.8 km/h)
-            let windChill = temp;
-            if (temp <= 10 && windSpeed > 4.8) {
-                windChill = 13.12 + 0.6215 * temp - 11.37 * Math.pow(windSpeed, 0.16) + 0.3965 * temp * Math.pow(windSpeed, 0.16);
+            const rawData = await response.json();
+            
+            // Handle both flat arrays and AWS API Gateway { Items: [] } wrappers
+            let dataArray = rawData.Items ? rawData.Items : rawData;
+
+            if (!Array.isArray(dataArray) || dataArray.length === 0) {
+                console.warn("Database is empty or format is wrong.");
+                return;
             }
 
-            // Combustible Gas Risk (Assuming ~500 is clean, ~3500 is toxic)
-            let gasRisk = Math.max(0, Math.min(100, ((rawAq - 500) / 3000) * 100));
+            // Force sort the array to guarantee we ALWAYS grab the highest timestamp
+            dataArray.sort((a, b) => b.timestamp - a.timestamp);
+            const latest = dataArray[0];
 
-            return { feelsLike: feelsLike, rainChance: rainChance, windChill: windChill, gasRisk: gasRisk };
+            // 🚨 WIRE-TAP PRINTS TO DEVELOPER CONSOLE 🚨
+            console.log("🔥 NEWEST AWS DATA AT " + new Date().toLocaleTimeString() + " :", latest);
+
+            const wind = latest.windSpeed || 0; 
+            const derived = calculateDerivedMetrics(latest.temperature, latest.humidity, latest.pressure, wind, latest.airQuality);
+
+            animateValue('val-temp', 'temp', latest.temperature, true);
+            animateValue('val-hum', 'hum', latest.humidity, true);
+            animateValue('val-pres', 'pres', latest.pressure, false);
+            animateValue('val-aq', 'aq', latest.airQuality, false);
+            animateValue('val-gas', 'gas', derived.gasRisk, false);
+            animateValue('val-rain', 'rain', derived.rainChance, false);
+            animateValue('val-wind', 'wind', wind, true);
+            animateValue('val-feel', 'feel', derived.feelsLike, true);
+            animateValue('val-chill', 'chill', derived.windChill, true);
+
+            // Ensure the ping indicator is green
+            document.querySelector('.ping').style.backgroundColor = "#10b981";
+
+        } catch (error) {
+            console.error("Pipeline Error:", error);
+            document.querySelector('.ping').style.backgroundColor = "red";
         }
+    }
 
-        async function fetchWeatherData() {
-            try {
-                const response = await fetch(apiEndpoint + '?nocache=' + new Date().getTime(), { cache: 'no-store' });;
-                if (!response.ok) throw new Error("Gateway Offline");
-                
-                const data = await response.json();
-                const latest = data.reduce((prev, current) => (prev.timestamp > current.timestamp) ? prev : current);
-                
-                // Set default to 0 if windSpeed doesn't exist yet in the database
-                const wind = latest.windSpeed || 0; 
-                
-                const derived = calculateDerivedMetrics(latest.temperature, latest.humidity, latest.pressure, wind, latest.airQuality);
-
-                animateValue('val-temp', 'temp', latest.temperature, true);
-                animateValue('val-hum', 'hum', latest.humidity, true);
-                animateValue('val-pres', 'pres', latest.pressure, false);
-                animateValue('val-aq', 'aq', latest.airQuality, false);
-                animateValue('val-gas', 'gas', derived.gasRisk, false);
-                animateValue('val-rain', 'rain', derived.rainChance, false);
-                animateValue('val-wind', 'wind', wind, true);
-                animateValue('val-feel', 'feel', derived.feelsLike, true);
-                animateValue('val-chill', 'chill', derived.windChill, true);
-
-            } catch (error) {
-                console.error("Pipeline Error:", error);
-                document.getElementById('timeGreeting').innerText = "SYSTEM OFFLINE";
-                document.querySelector('.ping').style.backgroundColor = "red";
-            }
-        }
-
-        // --- 3. BOOT SEQUENCE ---
-        initSkyEngine();
-        updateSkyTheme();
-        fetchWeatherData();
-        setInterval(fetchWeatherData, 10000); 
-    </script>
+    // --- BOOT SEQUENCE ---
+    initSkyEngine();
+    updateSkyTheme();
+    fetchWeatherData();
+    setInterval(fetchWeatherData, 10000); 
+</script>
 </body>
 </html>
