@@ -159,6 +159,24 @@
         return new Date(val).getTime() || 0;
     }
 
+    // --- THE UNIVERSAL TIME FINDER ---
+    // Hunts down your custom DynamoDB partition key automatically
+    function findTime(obj) {
+        if (obj.timestamp) return getAwsTime(obj.timestamp);
+        if (obj.Time) return getAwsTime(obj.Time);
+        if (obj.time) return getAwsTime(obj.time);
+        if (obj.Date) return getAwsTime(obj.Date);
+        if (obj.date) return getAwsTime(obj.date);
+        if (obj.id) return getAwsTime(obj.id); 
+        
+        for (let key in obj) {
+            if (key.toLowerCase().includes('time') || key.toLowerCase().includes('date')) {
+                return getAwsTime(obj[key]);
+            }
+        }
+        return 0; 
+    }
+
     // --- FETCH ENGINE ---
     async function fetchWeatherData() {
         try {
@@ -173,12 +191,12 @@
             if (rawData.Items) dataArray = rawData.Items;
             else if (rawData.body) dataArray = JSON.parse(rawData.body);
             else if (Array.isArray(rawData)) dataArray = rawData;
-            else dataArray = [rawData]; // Fallback if it's just one object
+            else dataArray = [rawData]; 
 
             if (dataArray.length === 0) return;
 
-            // Sort correctly using the decoder
-            dataArray.sort((a, b) => getAwsTime(b.timestamp) - getAwsTime(a.timestamp));
+            // 🔥 FIX: Use the Universal Time Finder to guarantee the newest data is at index 0
+            dataArray.sort((a, b) => findTime(b) - findTime(a));
             const latest = dataArray[0];
 
             console.log("🔥 UNWRAPPED NEWEST DATA:", latest);
