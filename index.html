@@ -136,57 +136,67 @@
         return { feelsLike: feelsLike, rainChance: rainChance, windChill: windChill, gasRisk: gasRisk };
     }
 
-    // --- BRUTE-FORCE HTML INJECTOR ---
     function forceUpdate(id, rawValue, isFloat = false) {
         try {
-            // Force the AWS data to become a pure math number, defaulting to 0 if it fails
-            const safeNumber = Number(rawValue) || 0; 
             const obj = document.getElementById(id);
-            
-            // Instantly change the text on the screen
-            if (isFloat) {
-                obj.innerText = safeNumber.toFixed(1);
-            } else {
-                obj.innerText = Math.round(safeNumber);
-            }
-        } catch (e) {
-            console.error("Failed to update card: " + id, e);
-        }
+            if (isFloat) { obj.innerText = rawValue.toFixed(1); } 
+            else { obj.innerText = Math.round(rawValue); }
+        } catch (e) { console.error("Failed to update card: " + id, e); }
+    }
+
+    // --- THE DYNAMODB DECODER RING ---
+    // Safely breaks open AWS {"N": "10"} and {"S": "10"} data wrappers
+    function getAwsVal(field) {
+        if (field === null || field === undefined) return 0;
+        if (typeof field === 'object') { return Number(field.N || field.S) || 0; }
+        return Number(field) || 0;
+    }
+
+    function getAwsTime(field) {
+        if (!field) return 0;
+        let val = typeof field === 'object' ? (field.N || field.S) : field;
+        if (!isNaN(val)) return Number(val);
+        return new Date(val).getTime() || 0;
     }
 
     // --- FETCH ENGINE ---
     async function fetchWeatherData() {
         try {
-            // Bust the browser cache
             const bypassCacheUrl = apiEndpoint + (apiEndpoint.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-            
             const response = await fetch(bypassCacheUrl, { cache: 'no-store' });
             if (!response.ok) throw new Error("Gateway Offline");
             
             const rawData = await response.json();
-            let dataArray = rawData.Items ? rawData.Items : rawData;
+            
+            // Check if AWS wrapped it in 'Items' or 'body'
+            let dataArray = [];
+            if (rawData.Items) dataArray = rawData.Items;
+            else if (rawData.body) dataArray = JSON.parse(rawData.body);
+            else if (Array.isArray(rawData)) dataArray = rawData;
+            else dataArray = [rawData]; // Fallback if it's just one object
 
-            if (!Array.isArray(dataArray) || dataArray.length === 0) return;
+            if (dataArray.length === 0) return;
 
-            // Sort newest to oldest
-            dataArray.sort((a, b) => {
-                // Force AWS timestamps into pure numbers, whether they are strings, integers, or dates
-                const timeA = Number(a.timestamp) || new Date(a.timestamp).getTime() || 0;
-                const timeB = Number(b.timestamp) || new Date(b.timestamp).getTime() || 0;
-                return timeB - timeA;
-            });
+            // Sort correctly using the decoder
+            dataArray.sort((a, b) => getAwsTime(b.timestamp) - getAwsTime(a.timestamp));
             const latest = dataArray[0];
 
-            console.log("🔥 INJECTING TO HTML:", latest);
+            console.log("🔥 UNWRAPPED NEWEST DATA:", latest);
 
-            const wind = Number(latest.windSpeed) || 0; 
-            const derived = calculateDerivedMetrics(Number(latest.temperature), Number(latest.humidity), Number(latest.pressure), wind, Number(latest.airQuality));
+            // Extract the pure math numbers
+            const temp = getAwsVal(latest.temperature);
+            const hum = getAwsVal(latest.humidity);
+            const pres = getAwsVal(latest.pressure);
+            const aq = getAwsVal(latest.airQuality);
+            const wind = getAwsVal(latest.windSpeed);
 
-            // Force update every single card on the screen
-            forceUpdate('val-temp', latest.temperature, true);
-            forceUpdate('val-hum', latest.humidity, true);
-            forceUpdate('val-pres', latest.pressure, false);
-            forceUpdate('val-aq', latest.airQuality, false);
+            const derived = calculateDerivedMetrics(temp, hum, pres, wind, aq);
+
+            // Inject to HTML
+            forceUpdate('val-temp', temp, true);
+            forceUpdate('val-hum', hum, true);
+            forceUpdate('val-pres', pres, false);
+            forceUpdate('val-aq', aq, false);
             forceUpdate('val-gas', derived.gasRisk, false);
             forceUpdate('val-rain', derived.rainChance, false);
             forceUpdate('val-wind', wind, true);
@@ -201,7 +211,6 @@
         }
     }
 
-    // --- BOOT SEQUENCE ---
     initSkyEngine();
     updateSkyTheme();
     fetchWeatherData();
