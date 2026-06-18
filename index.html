@@ -165,7 +165,7 @@
 
         async function fetchWeatherData() {
             try {
-                const response = await fetch(apiEndpoint);
+                const response = await fetch(apiEndpoint + '?nocache=' + new Date().getTime(), { cache: 'no-store' });;
                 if (!response.ok) throw new Error("Gateway Offline");
                 
                 const data = await response.json();
