@@ -148,7 +148,7 @@
         return { feelsLike: feelsLike, rainChance: rainChance, windChill: windChill, gasRisk: gasRisk };
     }
 
-    // --- NEW: THE ANIMATION ENGINE ---
+    // --- THE ANIMATION ENGINE ---
     function animateValue(obj, start, end, duration, isFloat) {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -224,12 +224,9 @@
         const toxicAirRaw = 4095; // The max value the ESP32 can output 
 
         // 2. THE MAPPING ALGORITHM
-        // Squishes your 1000-4095 range into the official 0-500 scale.
-        // We add '+ 25' at the end so perfect air reads as '25' instead of an unrealistic '0'.
         let calculatedAQI = (((rawSensorValue - cleanAirRaw) / (toxicAirRaw - cleanAirRaw)) * 475) + 25;
 
         // 3. SAFETY CLAMPS
-        // If the room gets extra clean (e.g., raw drops to 850), this stops the math from going into negative numbers.
         let standardAQI = Math.max(0, Math.round(calculatedAQI));
 
         // 4. THE OFFICIAL EPA SCALE
